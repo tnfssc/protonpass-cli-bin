@@ -37,6 +37,85 @@ Invoke-WebRequest -Uri https://github.com/tnfssc/protonpass-cli-bin/releases/lat
 Expand-Archive -Path pass-cli.zip -DestinationPath .
 ```
 
+## Installation with mise
+
+If you use [mise](https://mise.jdx.dev/), you can install ProtonPass CLI directly from this mirror using the built-in `github` backend.
+
+### Prerequisites
+
+- [mise installed](https://mise.jdx.dev/installing-mise.html)
+
+### Quick Install
+
+Install the latest version:
+
+```bash
+mise use github:tnfssc/protonpass-cli-bin
+```
+
+This will:
+- Automatically detect your platform (OS and architecture)
+- Download the appropriate binary
+- Install and make it available
+
+### Install a Specific Version
+
+```bash
+# Install version 1.3.2
+mise use github:tnfssc/protonpass-cli-bin@1.3.2
+
+# Or always use latest
+mise use github:tnfssc/protonpass-cli-bin@latest
+```
+
+### List Available Versions
+
+```bash
+mise ls-remote github:tnfssc/protonpass-cli-bin
+```
+
+### Update to Latest Version
+
+```bash
+mise upgrade github:tnfssc/protonpass-cli-bin
+```
+
+### Persistent Configuration
+
+To make the installation persistent across shell sessions, add this to your `~/.config/mise/config.toml`:
+
+```toml
+[tools]
+"github:tnfssc/protonpass-cli-bin" = { version = "latest", asset_pattern = "pass-cli-linux-x86_64", bin = "pass-cli" }
+```
+
+Replace `asset_pattern` with your platform's binary:
+
+| Platform | Architecture | asset_pattern |
+|----------|--------------|---------------|
+| Linux | x86_64 | `pass-cli-linux-x86_64` |
+| Linux | aarch64 | `pass-cli-linux-aarch64` |
+| macOS | x86_64 (Intel) | `pass-cli-macos-x86_64` |
+| macOS | aarch64 (Apple Silicon) | `pass-cli-macos-aarch64` |
+
+### Using the Tool
+
+After installation, you can run the binary using mise exec:
+
+```bash
+mise exec -- pass-cli --version
+mise exec -- pass-cli login
+```
+
+Or if you have mise properly activated in your shell, you can run it directly:
+
+```bash
+pass-cli --version
+pass-cli login
+```
+
+> **Note:** Check the installed binary path with `mise where github:tnfssc/protonpass-cli-bin` to verify the exact location.
+
 ## Verification
 
 Always verify the binary integrity using the SHA256 checksums:
