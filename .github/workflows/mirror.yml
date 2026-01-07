@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq
+          sudo apt-get install -y curl jq tar unzip
 
       - name: Fetch manifest
         id: manifest
@@ -97,12 +97,20 @@ jobs:
           download_binary "macos" "aarch64" "pass-cli-macos-aarch64"
           download_binary "windows" "x86_64" "pass-cli-windows-x86_64.zip"
           
-          echo "Creating mise-friendly asset names..."
-          cp binaries/pass-cli-linux-x86_64 binaries/pass-cli-linux-x64
-          cp binaries/pass-cli-linux-aarch64 binaries/pass-cli-linux-arm64
-          cp binaries/pass-cli-macos-x86_64 binaries/pass-cli-macos-x64
-          cp binaries/pass-cli-macos-aarch64 binaries/pass-cli-macos-arm64
-          cp binaries/pass-cli-windows-x86_64.zip binaries/pass-cli-windows-x64.zip
+          echo "Creating mise-friendly archives for better autodetection..."
+          
+          # Create tar.gz archives for Linux (better mise autodetection)
+          tar -czf binaries/pass-cli-linux-x64.tar.gz -C binaries pass-cli-linux-x86_64
+          tar -czf binaries/pass-cli-linux-arm64.tar.gz -C binaries pass-cli-linux-aarch64
+          
+          # Create tar.gz archives for macOS
+          tar -czf binaries/pass-cli-macos-x64.tar.gz -C binaries pass-cli-macos-x86_64
+          tar -czf binaries/pass-cli-macos-arm64.tar.gz -C binaries pass-cli-macos-aarch64
+          
+          # Create tar.gz for Windows (keep original zip too)
+          unzip -q binaries/pass-cli-windows-x86_64.zip -d binaries/temp_windows
+          tar -czf binaries/pass-cli-windows-x64.tar.gz -C binaries/temp_windows pass-cli.exe
+          rm -rf binaries/temp_windows
           
           echo "All binaries downloaded and verified successfully"
 
@@ -169,13 +177,13 @@ jobs:
             --title "ProtonPass CLI v${VERSION}" \
             --notes-file RELEASE_NOTES.md \
             binaries/pass-cli-linux-x86_64 \
-            binaries/pass-cli-linux-x64 \
             binaries/pass-cli-linux-aarch64 \
-            binaries/pass-cli-linux-arm64 \
+            binaries/pass-cli-linux-x64.tar.gz \
+            binaries/pass-cli-linux-arm64.tar.gz \
             binaries/pass-cli-macos-x86_64 \
-            binaries/pass-cli-macos-x64 \
             binaries/pass-cli-macos-aarch64 \
-            binaries/pass-cli-macos-arm64 \
+            binaries/pass-cli-macos-x64.tar.gz \
+            binaries/pass-cli-macos-arm64.tar.gz \
             binaries/pass-cli-windows-x86_64.zip \
-            binaries/pass-cli-windows-x64.zip \
+            binaries/pass-cli-windows-x64.tar.gz \
             SHA256SUMS

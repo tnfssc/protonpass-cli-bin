@@ -172,6 +172,16 @@ Each release includes the following binaries:
 | `pass-cli-macos-aarch64` | macOS | ARM64 (Apple Silicon) |
 | `pass-cli-windows-x86_64.zip` | Windows | x86_64 |
 
+For **mise** users, the following archive files are also provided (auto-detected):
+
+| Archive | Platform | Architecture |
+|---------|----------|--------------|
+| `pass-cli-linux-x64.tar.gz` | Linux | x86_64 |
+| `pass-cli-linux-arm64.tar.gz` | Linux | ARM64 |
+| `pass-cli-macos-x64.tar.gz` | macOS | x86_64 (Intel) |
+| `pass-cli-macos-arm64.tar.gz` | macOS | ARM64 (Apple Silicon) |
+| `pass-cli-windows-x64.tar.gz` | Windows | x86_64 |
+
 ## Official Sources
 
 - **ProtonPass CLI Repository**: https://github.com/protonpass/pass-cli
