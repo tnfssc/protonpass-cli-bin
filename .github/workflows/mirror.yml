@@ -97,6 +97,13 @@ jobs:
           download_binary "macos" "aarch64" "pass-cli-macos-aarch64"
           download_binary "windows" "x86_64" "pass-cli-windows-x86_64.zip"
           
+          echo "Creating mise-friendly asset names..."
+          cp binaries/pass-cli-linux-x86_64 binaries/pass-cli-linux-x64
+          cp binaries/pass-cli-linux-aarch64 binaries/pass-cli-linux-arm64
+          cp binaries/pass-cli-macos-x86_64 binaries/pass-cli-macos-x64
+          cp binaries/pass-cli-macos-aarch64 binaries/pass-cli-macos-arm64
+          cp binaries/pass-cli-windows-x86_64.zip binaries/pass-cli-windows-x64.zip
+          
           echo "All binaries downloaded and verified successfully"
 
       - name: Fetch release notes
@@ -162,8 +169,13 @@ jobs:
             --title "ProtonPass CLI v${VERSION}" \
             --notes-file RELEASE_NOTES.md \
             binaries/pass-cli-linux-x86_64 \
+            binaries/pass-cli-linux-x64 \
             binaries/pass-cli-linux-aarch64 \
+            binaries/pass-cli-linux-arm64 \
             binaries/pass-cli-macos-x86_64 \
+            binaries/pass-cli-macos-x64 \
             binaries/pass-cli-macos-aarch64 \
+            binaries/pass-cli-macos-arm64 \
             binaries/pass-cli-windows-x86_64.zip \
+            binaries/pass-cli-windows-x64.zip \
             SHA256SUMS

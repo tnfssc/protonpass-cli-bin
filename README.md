@@ -86,17 +86,8 @@ To make the installation persistent across shell sessions, add this to your `~/.
 
 ```toml
 [tools]
-"github:tnfssc/protonpass-cli-bin" = { version = "latest", asset_pattern = "pass-cli-linux-x86_64", bin = "pass-cli" }
+"github:tnfssc/protonpass-cli-bin" = "latest"
 ```
-
-Replace `asset_pattern` with your platform's binary:
-
-| Platform | Architecture | asset_pattern |
-|----------|--------------|---------------|
-| Linux | x86_64 | `pass-cli-linux-x86_64` |
-| Linux | aarch64 | `pass-cli-linux-aarch64` |
-| macOS | x86_64 (Intel) | `pass-cli-macos-x86_64` |
-| macOS | aarch64 (Apple Silicon) | `pass-cli-macos-aarch64` |
 
 ### Using the Tool
 
