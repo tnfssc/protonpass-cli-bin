@@ -1,0 +1,169 @@
+name: Mirror ProtonPass CLI Release
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Fetch manifest
+        id: manifest
+        run: |
+          MANIFEST_URL="https://proton.me/download/pass-cli/versions.json"
+          MANIFEST=$(curl -fsSL "$MANIFEST_URL")
+          
+          VERSION=$(echo "$MANIFEST" | jq -r '.passCliVersions.version')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION"
+          
+          echo "manifest=$(echo "$MANIFEST" | jq -c .)" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          VERSION="${{ steps.manifest.outputs.version }}"
+          TAG="v${VERSION}"
+          
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag $TAG does not exist"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download binaries
+        id: download
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.manifest.outputs.version }}"
+          MANIFEST='${{ steps.manifest.outputs.manifest }}'
+          
+          mkdir -p binaries
+          
+          download_binary() {
+            local os=$1
+            local arch=$2
+            local name=$3
+            
+            url=$(echo "$MANIFEST" | jq -r ".passCliVersions.urls.\"$os\".\"$arch\".url")
+            hash=$(echo "$MANIFEST" | jq -r ".passCliVersions.urls.\"$os\".\"$arch\".hash")
+            
+            if [ "$url" == "null" ] || [ "$hash" == "null" ]; then
+              echo "Warning: No binary for $os/$arch"
+              return
+            fi
+            
+            echo "Downloading $name from $url"
+            curl -fsSL -o "binaries/$name" "$url"
+            
+            echo "Verifying $name"
+            computed_hash=$(sha256sum "binaries/$name" | awk '{print $1}')
+            
+            if [ "$computed_hash" != "$hash" ]; then
+              echo "Hash verification failed for $name"
+              echo "Expected: $hash"
+              echo "Got: $computed_hash"
+              exit 1
+            fi
+            
+            echo "$computed_hash  $name" >> SHA256SUMS
+            
+            if [ "$os" == "windows" ]; then
+              chmod +x "binaries/$name"
+            fi
+          }
+          
+          echo "# SHA256 Checksums for ProtonPass CLI v${VERSION}" > SHA256SUMS
+          echo "" >> SHA256SUMS
+          
+          download_binary "linux" "x86_64" "pass-cli-linux-x86_64"
+          download_binary "linux" "aarch64" "pass-cli-linux-aarch64"
+          download_binary "macos" "x86_64" "pass-cli-macos-x86_64"
+          download_binary "macos" "aarch64" "pass-cli-macos-aarch64"
+          download_binary "windows" "x86_64" "pass-cli-windows-x86_64.zip"
+          
+          echo "All binaries downloaded and verified successfully"
+
+      - name: Fetch release notes
+        id: changelog
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.manifest.outputs.version }}"
+          CHANGELOG_URL="https://raw.githubusercontent.com/protonpass/pass-cli/main/CHANGELOG.md"
+          
+          CHANGELOG=$(curl -fsSL "$CHANGELOG_URL")
+          
+          RELEASE_NOTES=$(echo "$CHANGELOG" | sed -n "/^## $VERSION/,/^## /p" | head -n -1)
+          
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="ProtonPass CLI v${VERSION}"
+          fi
+          
+          {
+            echo "# ProtonPass CLI v${VERSION}"
+            echo ""
+            echo "This is a mirror release of ProtonPass CLI v${VERSION}"
+            echo ""
+            echo "## Download"
+            echo ""
+            echo "Choose the binary for your platform:"
+            echo ""
+            echo "- Linux (x86_64): \`pass-cli-linux-x86_64\`"
+            echo "- Linux (aarch64): \`pass-cli-linux-aarch64\`"
+            echo "- macOS (x86_64): \`pass-cli-macos-x86_64\`"
+            echo "- macOS (aarch64): \`pass-cli-macos-aarch64\`"
+            echo "- Windows (x86_64): \`pass-cli-windows-x86_64.zip\`"
+            echo ""
+            echo "## Verification"
+            echo ""
+            echo "Verify the SHA256 checksum:"
+            echo "\`\`\`bash"
+            echo "sha256sum -c SHA256SUMS"
+            echo "\`\`\`"
+            echo ""
+            echo "## What's Changed"
+            echo ""
+            echo "$RELEASE_NOTES"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**Full Changelog**: https://github.com/protonpass/pass-cli/blob/main/CHANGELOG.md"
+            echo ""
+            echo "This mirror is updated daily at 00:00 UTC."
+          } > RELEASE_NOTES.md
+          
+          echo "Release notes:"
+          cat RELEASE_NOTES.md
+
+      - name: Create release
+        if: steps.check_tag.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.manifest.outputs.version }}"
+          TAG="v${VERSION}"
+          
+          gh release create "$TAG" \
+            --title "ProtonPass CLI v${VERSION}" \
+            --notes-file RELEASE_NOTES.md \
+            binaries/pass-cli-linux-x86_64 \
+            binaries/pass-cli-linux-aarch64 \
+            binaries/pass-cli-macos-x86_64 \
+            binaries/pass-cli-macos-aarch64 \
+            binaries/pass-cli-windows-x86_64.zip \
+            SHA256SUMS
