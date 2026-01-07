@@ -102,23 +102,28 @@ jobs:
           # Create temp directories for archives with renamed binaries
           mkdir -p binaries/archives
           
-          # Linux archives (rename to pass-cli)
+          # Linux archives (rename to pass-cli and make executable)
           cp binaries/pass-cli-linux-x86_64 binaries/archives/pass-cli
+          chmod +x binaries/archives/pass-cli
           tar -czf binaries/pass-cli-linux-x64.tar.gz -C binaries/archives pass-cli
           
           cp binaries/pass-cli-linux-aarch64 binaries/archives/pass-cli
+          chmod +x binaries/archives/pass-cli
           tar -czf binaries/pass-cli-linux-arm64.tar.gz -C binaries/archives pass-cli
           
           # macOS archives
           cp binaries/pass-cli-macos-x86_64 binaries/archives/pass-cli
+          chmod +x binaries/archives/pass-cli
           tar -czf binaries/pass-cli-macos-x64.tar.gz -C binaries/archives pass-cli
           
           cp binaries/pass-cli-macos-aarch64 binaries/archives/pass-cli
+          chmod +x binaries/archives/pass-cli
           tar -czf binaries/pass-cli-macos-arm64.tar.gz -C binaries/archives pass-cli
           
           # Windows archive (keep original zip too)
           unzip -q binaries/pass-cli-windows-x86_64.zip -d binaries/temp_windows
           cp binaries/temp_windows/pass-cli.exe binaries/archives/pass-cli.exe
+          chmod +x binaries/archives/pass-cli.exe
           tar -czf binaries/pass-cli-windows-x64.tar.gz -C binaries/archives pass-cli.exe
           rm -rf binaries/temp_windows binaries/archives
           
