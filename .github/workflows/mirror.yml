@@ -32,17 +32,19 @@ jobs:
           
           echo "manifest=$(echo "$MANIFEST" | jq -c .)" >> $GITHUB_OUTPUT
 
-      - name: Check if tag exists
+      - name: Check if release exists
         id: check_tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ steps.manifest.outputs.version }}"
           TAG="v${VERSION}"
           
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "Tag $TAG does not exist"
+            echo "Release $TAG does not exist"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
